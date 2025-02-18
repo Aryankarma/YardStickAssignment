@@ -30,6 +30,9 @@ export async function PUT(request: Request, {params} : {params: {id: string}}) {
       } 
     })
     if (result.modifiedCount === 1) {
+      console.log(
+        "transaction updated successfully"
+      )
       return NextResponse.json({ message: "Transaction updated successfully" })
     } else {
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 })

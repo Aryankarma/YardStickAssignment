@@ -50,7 +50,7 @@ export default function ExpensesChart({
     }
 
     return acc;
-  }, []);
+  }, [transactions]);
 
   return (
     <div className="h-[400px] w-full px-4">

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface TransactionFormProps {
   open: boolean;
+  setOpen: (open: boolean) => void;
   amount: string;
   date: Date;
   description: string;
@@ -26,6 +27,7 @@ interface TransactionFormProps {
 
 export default function TransactionForm({
   open,
+  setOpen,
   amount,
   date,
   description,
@@ -40,6 +42,7 @@ export default function TransactionForm({
   const router = useRouter();
 
   function onOpenChange(open: boolean) {
+    setOpen(open); 
     if (!open) {
       router.push("/dashboard");
     }
@@ -106,7 +109,9 @@ export default function TransactionForm({
               required
             />
           </div>
-          <Button type="submit">Add Transaction</Button>
+          <Button type="submit">
+          {editingTransaction ? "Edit Transaction" : "Add Transaction"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

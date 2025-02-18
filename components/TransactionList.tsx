@@ -19,10 +19,10 @@ interface TransactionListProps {
   transactions: Transaction[];
   handleDelete: (id: string) => void;
   handleEdit: (id: string) => void;
-  setEditingTransactionID: (id: string) => void;
+  setIsDialogOpen: (open: boolean) => void;
 }
 
-export default function TransactionList({transactions, handleEdit, handleDelete, setEditingTransactionID } : TransactionListProps) {
+export default function TransactionList({transactions, handleEdit, handleDelete, setIsDialogOpen } : TransactionListProps) {
 
   return (
     <div className="space-y-4 flex flex-col pb-auto justify-start items-center h-full">

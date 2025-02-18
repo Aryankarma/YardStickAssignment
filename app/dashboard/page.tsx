@@ -11,7 +11,7 @@ import {
 import { PlusCircle } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useToast } from "../../hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, DO_NOT_USE_OR_YOU_WILL_BE_FIRED_EXPERIMENTAL_FORM_ACTIONS } from "react";
 import { useRouter } from "next/navigation";
 
 interface Transaction {
@@ -32,12 +32,13 @@ export default function Dashboard() {
   const [date, setDate] = useState<Date>(new Date());
   const [description, setDescription] = useState("");
   const [editingTransaction, setEditingTransaction] = useState(false);
-  const [editingTransactionID, setEditingTransactionID] = useState<string>("");
+  const [editingTransactionData, setEditingTransactionData] =
+    useState<Transaction>();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const { toast } = useToast();
 
-  const router = useRouter()
+  const router = useRouter();
 
   // all functions
   useEffect(() => {
@@ -66,54 +67,93 @@ export default function Dashboard() {
     try {
       const res = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
-      })
+      });
 
       if (res.ok) {
-        setTransactions(transactions.filter((t) => t._id !== id))
+        setTransactions(transactions.filter((t) => t._id !== id));
         toast({
           title: "Success",
           description: "Transaction deleted successfully",
-        })
+        });
       } else {
-        throw new Error("Failed to delete transaction")
+        throw new Error("Failed to delete transaction");
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete transaction",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // handle edit function
   const handleEdit = async (id: string) => {
+    setIsDialogOpen(true);
+    setEditingTransaction(true);
+  
+    const transaction = transactions.find((t) => t._id === id);
+  
+    if (!transaction) {
+      toast({
+        title: "Error",
+        description: "Transaction not found",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    setEditingTransactionData(transaction);
+    setAmount(transaction.amount.toString());
+    setDescription(transaction.description);
+    setType(transaction.type);
+    setDate(new Date(transaction.date));
+
     try {
+      
       const res = await fetch(`/api/transactions/${id}`, {
         method: "PUT",
-      })
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: parseFloat(amount),
+          description,
+          type,
+          date,
+        }),
+      });
 
       if (res.ok) {
-        setTransactions(transactions.filter((t) => t._id !== id))
+        const updatedTransaction = await res.json();
+        setTransactions(
+          transactions.map((t) => (t._id === id ? { ...t, ...updatedTransaction } : t))
+        );
         toast({
           title: "Success",
-          description: "Transaction deleted successfully",
-        })
+          description: "Transaction updated successfully",
+        });
       } else {
-        throw new Error("Failed to delete transaction")
+        throw new Error("Failed to delete transaction");
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete transaction",
         variant: "destructive",
-      })
+      });
     }
-  }
-
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if(editingTransaction) {
+      if (editingTransactionData) {
+        handleEdit(editingTransactionData._id);
+      }
+      return;
+    }
 
     if (!amount || !date || !description || !type) {
       toast({
@@ -147,9 +187,11 @@ export default function Dashboard() {
           title: "Success",
           description: "Transaction added successfully",
         });
-        setIsDialogOpen(false);
-        const resp = await res.json()
-        setTransactions([...transactions, {_id: resp.id, amount: Number(amount), date, type, description}]); 
+        const resp = await res.json();
+        setTransactions([
+          ...transactions,
+          { _id: resp.id, amount: Number(amount), date, type, description },
+        ]);
       } else {
         throw new Error("Failed to add transaction");
       }
@@ -187,7 +229,12 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent className="h-[400px] overflow-y-scroll">
-            <TransactionList setEditingTransactionID={setEditingTransactionID} transactions={transactions} handleDelete={handleDelete} handleEdit={handleEdit} />
+            <TransactionList
+              setIsDialogOpen={setIsDialogOpen}
+              transactions={transactions}
+              handleDelete={handleDelete}
+              handleEdit={handleEdit}
+            />
           </CardContent>
         </Card>
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -195,7 +242,20 @@ export default function Dashboard() {
           <ExpensesChart transactions={transactions} />
         </div>
       </div>
-      <TransactionForm handleSubmit={handleSubmit} editingTransaction={editingTransaction} open={isDialogOpen} amount={amount} date={date} description={description} type={type} setAmount={setAmount} setDate={setDate} setDescription={setDescription} setType={setType} />
+      <TransactionForm
+        handleSubmit={handleSubmit}
+        editingTransaction={editingTransaction}
+        open={isDialogOpen}
+        setOpen={setIsDialogOpen}
+        amount={amount}
+        date={date}
+        description={description}
+        type={type}
+        setAmount={setAmount}
+        setDate={setDate}
+        setDescription={setDescription}
+        setType={setType}
+      />
     </div>
   );
 }
