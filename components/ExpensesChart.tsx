@@ -1,8 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
-import { toast } from "./ui/use-toast"
+import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import { toast } from "./ui/use-toast";
 import { format } from "date-fns";
 
 interface Transaction {
@@ -15,45 +24,15 @@ interface Transaction {
   updatedAt?: Date;
 }
 
-export default function ExpensesChart() {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-
-  useEffect(() => {
-    fetchMonthlyExpenses()
-  }, [])
-
-  const fetchMonthlyExpenses = async () => {
-    try {
-      const res = await fetch("/api/transactions")
-      if (res.ok) {
-        const data = await res.json()
-        setTransactions(data)
-      } else {
-        throw new Error("Failed to fetch monthly expenses")
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch monthly expenses",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // return (
-  //   <ResponsiveContainer width="100%" height={300}>
-  //     <BarChart data={monthlyExpenses}>
-  //       <CartesianGrid strokeDasharray="3 3" />
-  //       <XAxis dataKey="month" />
-  //       <YAxis />
-  //       <Tooltip />
-  //       <Bar dataKey="amount" fill="#8884d8" />
-  //     </BarChart>
-  //   </ResponsiveContainer>
-  // )
-
+export default function ExpensesChart({
+  transactions,
+}: {
+  transactions: Transaction[];
+}) {
   const monthlyData = transactions.reduce((acc: any[], transaction) => {
-    const month = transaction?.date ? format(new Date(transaction?.date), "MMM d, yyyy") : "N/A";
+    const month = transaction?.date
+      ? format(new Date(transaction?.date), "MMM d, yyyy")
+      : "N/A";
     const existingMonth = acc.find((item) => item.month === month);
 
     if (existingMonth) {
@@ -87,7 +66,11 @@ export default function ExpensesChart() {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="expenses" fill="hsl(var(--destructive))" name="Expenses" />
+            <Bar
+              dataKey="expenses"
+              fill="hsl(var(--destructive))"
+              name="Expenses"
+            />
             <Bar dataKey="income" fill="hsl(var(--chart-2))" name="Income" />
           </BarChart>
         </ResponsiveContainer>
@@ -95,4 +78,3 @@ export default function ExpensesChart() {
     </div>
   );
 }
-

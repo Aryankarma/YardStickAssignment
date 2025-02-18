@@ -1,9 +1,8 @@
 "use client";
 
 import type React from "react";
-
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -11,77 +10,47 @@ import { toast } from "./ui/use-toast";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
-interface TransactionDialogProps {
+interface TransactionFormProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  amount: string;
+  date: Date;
+  description: string;
+  type: "expense" | "income";
+  editingTransaction: boolean;
+  setAmount: (amount: string) => void;
+  setDate: (date: Date) => void;
+  setDescription: (description: string) => void;
+  setType: (type: "expense" | "income") => void;
+  handleSubmit: (e: React.FormEvent) => void;
 }
 
 export default function TransactionForm({
   open,
-  onOpenChange,
-}: TransactionDialogProps) {
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState("");
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState("expense");
+  amount,
+  date,
+  description,
+  type,
+  editingTransaction,
+  setAmount,
+  setDate,
+  setDescription,
+  setType,
+  handleSubmit,
+}: TransactionFormProps) {
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!amount || !date || !description || !type) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
+  function onOpenChange(open: boolean) {
+    if (!open) {
+      router.push("/dashboard");
     }
-
-    try {
-      const res = await fetch("/api/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: Number.parseFloat(amount),
-          date,
-          description,
-          type,
-        }),
-      });
-
-      if (res.ok) {
-        setAmount("");
-        setDate("");
-        setDescription("");
-        setType("expense");
-        toast({
-          title: "Success",
-          description: "Transaction added successfully",
-        });
-        onOpenChange(false);
-        router.refresh();
-      } else {
-        throw new Error("Failed to add transaction");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add transaction",
-        variant: "destructive",
-      });
-    }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {/* {initialData ? "Edit Transaction" : "Add Transaction"} */}
-            Add Transaction
+            {editingTransaction ? "Edit Transaction" : "Add Transaction"}
           </DialogTitle>
         </DialogHeader>
 
@@ -90,7 +59,7 @@ export default function TransactionForm({
             <Label htmlFor="type">Type</Label>
             <RadioGroup
               value={type}
-              onValueChange={(value) => setType(value)}
+              onValueChange={(value) => setType(value as "expense" | "income")}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -121,8 +90,8 @@ export default function TransactionForm({
             <Input
               id="date"
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={date.toISOString().split("T")[0]}
+              onChange={(e) => setDate(new Date(e.target.value))}
               required
             />
           </div>
