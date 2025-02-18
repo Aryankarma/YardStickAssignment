@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "./ui/use-toast"
 import { format } from "date-fns";
 
 interface Transaction {

@@ -1,11 +1,11 @@
 "use client";
-import TransactionForm from "@/components/TransactionForm";
-import TransactionList from "@/components/TransactionList";
-import ExpensesChart from "@/components/ExpensesChart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import TransactionForm from "../../components/TransactionForm";
+import TransactionList from "../../components/TransactionList";
+import ExpensesChart from "../../components/ExpensesChart";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "../../components/ui/button";
+import { useToast } from "../../hooks/use-toast";
 import { useState } from "react";
 
 export default function Dashboard() {

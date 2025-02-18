@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { toast } from "@/components/ui/use-toast"
+import { Button } from "./ui/button"
+import { toast } from "./ui/use-toast"
 import { DeleteIcon } from "lucide-react"
 import { Trash } from "lucide-react"
 
