@@ -284,7 +284,7 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto overflow-hidden sm:0 px-6">
-       <div className="flex align-center justify-between py-2 text-center">
+       <div className="flex align-center justify-between pt-4 pb-2 text-center">
         <div>
           <h1 className="text-2xl text-start  font-bold">
             Personal Finance Visualizer
@@ -294,7 +294,7 @@ export default function Dashboard() {
             control of your financial future.
           </p>
         </div>
-        <div className="flex align-center ">
+        <div className="flex align-center items-center">
           <Button variant="outline" size="sm" onClick={() => setIsBudgetDialogOpen(true)}>
             Set Monthly Budget
           </Button>
@@ -344,17 +344,17 @@ export default function Dashboard() {
           <CategoryPieChart transactions={transactions} />
         </div>
 
-        <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
+  
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+      <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
           <SpendingInsights transactions={transactions} budgets={budgets} />
-        </div>
-
-        <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
-          <CategoryPieChart transactions={transactions} />
         </div>
 
         <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
           <BudgetComparison transactions={transactions} budgets={budgets} />
         </div>
+
       </div>
       <TransactionForm
         handleSubmit={handleSubmit}
