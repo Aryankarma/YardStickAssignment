@@ -53,7 +53,7 @@ export default function ExpensesChart({
   }, [transactions]);
 
   return (
-    <div className="h-[400px] w-full px-4">
+    <div className=" w-full px-4 h-[300px]">
       {transactions.length === 0 ? (
         <div className="flex h-full items-center justify-center text-muted-foreground">
           Add transactions to see your monthly breakdown

@@ -17,21 +17,15 @@ import {
   DO_NOT_USE_OR_YOU_WILL_BE_FIRED_EXPERIMENTAL_FORM_ACTIONS,
 } from "react";
 import { useRouter } from "next/navigation";
-
-interface Transaction {
-  _id: string;
-  amount: number;
-  description: string;
-  date: Date;
-  type: "expense" | "income";
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import CategoryPieChart from "../../components/CategoryPieChart";
+import DashboardSummary from "@components/DashboardSummary";
+import { TransactionCategory, Transaction } from "../../components/Types";
 
 export default function Dashboard() {
+  const { toast } = useToast();
+
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // const [onOpenChange, setOnOpenChange] = useState(false);
   const [amount, setAmount] = useState<string>("");
   const [date, setDate] = useState<Date>(new Date());
   const [description, setDescription] = useState("");
@@ -40,7 +34,7 @@ export default function Dashboard() {
     useState<Transaction>();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const { toast } = useToast();
+  const [category, setCategory] = useState<TransactionCategory>("other");
 
   const router = useRouter();
 
@@ -109,6 +103,7 @@ export default function Dashboard() {
     setEditingTransactionData(transaction);
     setAmount(transaction.amount.toString());
     setDescription(transaction.description);
+    setCategory(transaction.category);
     setType(transaction.type);
     setDate(new Date(transaction.date));
   };
@@ -137,6 +132,7 @@ export default function Dashboard() {
             body: JSON.stringify({
               amount: Number(amount),
               date,
+              category,
               description,
               type,
             }),
@@ -144,23 +140,15 @@ export default function Dashboard() {
         );
 
         if (res.ok) {
-          const updatedTransaction = await res.json();
-          // setTransactions(
-          //   transactions.map((t) =>
-          //     t._id === editingTransactionData._id
-          //       ? { ...t, ...updatedTransaction }
-          //       : t
-          //   )
-          // );
-
-          setTransactions(prevTransactions => 
+          setTransactions((prevTransactions) =>
             prevTransactions.map((t) =>
-              t._id === editingTransactionData._id 
+              t._id === editingTransactionData._id
                 ? {
                     ...t,
                     amount: Number(amount),
                     date,
                     description,
+                    category,
                     type,
                     updatedAt: new Date(),
                   }
@@ -185,6 +173,7 @@ export default function Dashboard() {
             amount: Number(amount),
             date,
             description,
+            category,
             type,
           }),
         });
@@ -193,7 +182,14 @@ export default function Dashboard() {
           const resp = await res.json();
           setTransactions([
             ...transactions,
-            { _id: resp.id, amount: Number(amount), date, type, description },
+            {
+              _id: resp.id,
+              amount: Number(amount),
+              date,
+              type,
+              description,
+              category,
+            },
           ]);
           toast({
             title: "Success",
@@ -203,6 +199,8 @@ export default function Dashboard() {
           throw new Error("Failed to add transaction");
         }
       }
+      setIsDialogOpen(false);
+
     } catch (error) {
       toast({
         title: "Error",
@@ -217,44 +215,47 @@ export default function Dashboard() {
     setDate(new Date());
     setDescription("");
     setType("expense");
+    setCategory("other");
     setEditingTransaction(false);
     setEditingTransactionData(undefined);
-    setIsDialogOpen(false);
   };
 
   return (
     <div className="container mx-auto overflow-hidden ">
-      <div className="flex flex-col items-center space-y-4 p-4 text-center">
-        <h1 className="text-4xl font-bold sm:text-5xl">
+      <div className="flex flex-col items-start py-2 text-center">
+        <h1 className="text-2xl text-start font-bold">
           Personal Finance Visualizer
         </h1>
-        <p className="max-w-[600px] text-muted-foreground">
+        <p className="max-w-[700px] text-start text-muted-foreground text-sm">
           Track your expenses, visualize your spending patterns, and take
           control of your financial future.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card>
+
+      <DashboardSummary transactions={transactions} />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
+        <Card className="h-[400px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle>Transactions</CardTitle>
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                setAmount("")
-                setDate(new Date())
-                setDescription("")
-                setType("expense")
-                setEditingTransaction(false)
-                setEditingTransactionData(undefined)
-                setIsDialogOpen(true)
+                setAmount("");
+                setDate(new Date());
+                setDescription("");
+                setType("expense");
+                setEditingTransaction(false);
+                setEditingTransactionData(undefined);
+                setIsDialogOpen(true);
               }}
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Transaction
             </Button>
           </CardHeader>
-          <CardContent className="h-[400px] overflow-y-scroll">
+          <CardContent className="overflow-y-scroll pb-4">
             <TransactionList
               setIsDialogOpen={setIsDialogOpen}
               transactions={transactions}
@@ -263,9 +264,14 @@ export default function Dashboard() {
             />
           </CardContent>
         </Card>
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[400px]">
           <h2 className="text-2xl font-semibold mb-4 p-6">Monthly Expenses</h2>
           <ExpensesChart transactions={transactions} />
+        </div>
+
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[400px]">
+          <CategoryPieChart transactions={transactions} />
         </div>
       </div>
       <TransactionForm
@@ -281,6 +287,8 @@ export default function Dashboard() {
         setDate={setDate}
         setDescription={setDescription}
         setType={setType}
+        category={category}
+        setCategory={setCategory}
       />
     </div>
   );

@@ -19,11 +19,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 export async function PUT(request: Request, {params} : {params: {id: string}}) {
   try {
     const { db } = await connectToDatabase()
-    const { amount, description, date, type } = await request.json()
+    const { amount, description, date, type, category } = await request.json()
     const result = await db.collection("transactions").updateOne({ _id: new ObjectId(params.id) },  { 
       $set: { 
         amount, 
-        description, 
+        description,
+        category,
         date: new Date(date), 
         type, 
         updatedAt: new Date()

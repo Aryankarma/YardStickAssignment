@@ -7,8 +7,16 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { toast } from "./ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { TransactionCategory, Transaction } from "./Types";
 
 interface TransactionFormProps {
   open: boolean;
@@ -23,6 +31,8 @@ interface TransactionFormProps {
   setDescription: (description: string) => void;
   setType: (type: "expense" | "income") => void;
   handleSubmit: (e: React.FormEvent) => void;
+  category: TransactionCategory;
+  setCategory: (category: TransactionCategory) => void;
 }
 
 export default function TransactionForm({
@@ -38,11 +48,13 @@ export default function TransactionForm({
   setDescription,
   setType,
   handleSubmit,
+  category,
+  setCategory,
 }: TransactionFormProps) {
   const router = useRouter();
 
   function onOpenChange(open: boolean) {
-    setOpen(open); 
+    setOpen(open);
     if (!open) {
       router.push("/dashboard");
     }
@@ -62,7 +74,12 @@ export default function TransactionForm({
             <Label htmlFor="type">Type</Label>
             <RadioGroup
               value={type}
-              onValueChange={(value) => setType(value as "expense" | "income")}
+              onValueChange={(value) => {
+                setType(value as "expense" | "income");
+                if (value === "income") {
+                  setCategory("income");
+                }
+              }}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -75,6 +92,41 @@ export default function TransactionForm({
               </div>
             </RadioGroup>
           </div>
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={category}
+              disabled={type === "income"}
+              onValueChange={(value) =>{
+                console.log('value', value)
+                setCategory(value as TransactionCategory)
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {type === "expense" ? (
+                  <>
+                    <SelectItem value="food">Food</SelectItem>
+                    <SelectItem value="transportation">
+                      Transportation
+                    </SelectItem>
+                    <SelectItem value="utilities">Utilities</SelectItem>
+                    <SelectItem value="entertainment">Entertainment</SelectItem>
+                    <SelectItem value="shopping">Shopping</SelectItem>
+                    <SelectItem value="healthcare">Healthcare</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="housing">Housing</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </>
+                ) : (
+                  <SelectItem value="income">Income</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <Label htmlFor="amount">Amount</Label>
             <Input

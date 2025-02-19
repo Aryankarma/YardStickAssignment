@@ -16,8 +16,8 @@ export async function POST(request: Request) {
     const { db } = await connectToDatabase()
     const requestData = await request.json()
     console.log("requestData: ", requestData)
-    const { amount, date, description, type } = requestData 
-    const result = await db.collection("transactions").insertOne({ amount, date, description, type })
+    const { amount, date, description, type, category } = requestData 
+    const result = await db.collection("transactions").insertOne({ amount, date, description, type, category })
     return NextResponse.json({ message: "Transaction added successfully", id: result.insertedId }, { status: 201 })
   } catch (error) {
     return NextResponse.json({ error: "Failed to add transaction" }, { status: 500 })

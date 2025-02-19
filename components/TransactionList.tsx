@@ -25,7 +25,7 @@ interface TransactionListProps {
 export default function TransactionList({transactions, handleEdit, handleDelete, setIsDialogOpen } : TransactionListProps) {
 
   return (
-    <div className="space-y-4 flex flex-col pb-auto justify-start items-center h-full">
+    <div className="space-y-4 flex flex-col pb-auto justify-start items-center h-[300px]">
       {transactions.length === 0 ? (
         <div className="h-full flex justify-center items-center">
           <p className="text-muted-foreground text-center">No transactions found</p>
