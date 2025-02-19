@@ -2,6 +2,11 @@
 import TransactionForm from "../../components/TransactionForm";
 import TransactionList from "../../components/TransactionList";
 import ExpensesChart from "../../components/ExpensesChart";
+import CategoryPieChart from "../../components/CategoryPieChart";
+import DashboardSummary from "@components/DashboardSummary";
+import SpendingInsights from "@components/SpendingInsights";
+import BudgetComparison from "@components/BudgetComparison";
+import BudgetForm from "@components/BudgetForm";
 import {
   Card,
   CardContent,
@@ -14,12 +19,13 @@ import { useToast } from "../../hooks/use-toast";
 import {
   useState,
   useEffect,
-  DO_NOT_USE_OR_YOU_WILL_BE_FIRED_EXPERIMENTAL_FORM_ACTIONS,
 } from "react";
 import { useRouter } from "next/navigation";
-import CategoryPieChart from "../../components/CategoryPieChart";
-import DashboardSummary from "@components/DashboardSummary";
-import { TransactionCategory, Transaction } from "../../components/Types";
+import {
+  TransactionCategory,
+  Transaction,
+  Budget,
+} from "../../components/Types";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -35,22 +41,80 @@ export default function Dashboard() {
   const [type, setType] = useState<"expense" | "income">("expense");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [category, setCategory] = useState<TransactionCategory>("other");
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
 
-  const router = useRouter();
-
-  // all functions
   useEffect(() => {
-    fetchTransactions();
+    fetchTransactionsAndBudget();
   }, []);
 
-  const fetchTransactions = async () => {
+  const handleBudgetSubmit = async (budgetData: Omit<Budget, "_id">) => {
+    const existingBudget = budgets.find(
+      (b) => b.category === budgetData.category && b.month === budgetData.month
+    );
+
+    const method = existingBudget ? "PUT" : "POST";
+    const url = existingBudget
+      ? `/api/budgets/${existingBudget._id}`
+      : "/api/budgets";
+
     try {
-      const res = await fetch("/api/transactions");
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(budgetData),
+      });
+
       if (res.ok) {
-        const data = await res.json();
-        setTransactions(data);
+        const updatedBudget = await res.json();
+
+        if (existingBudget) {
+          setBudgets((prevBudgets) =>
+            prevBudgets.map((b) =>
+              b._id === existingBudget._id ? updatedBudget : b
+            )
+          );
+        } else {
+          setBudgets((prevBudgets) => [...prevBudgets, updatedBudget]);
+        }
+
+        toast({
+          title: "Success",
+          description: `Budget ${
+            existingBudget ? "updated" : "set"
+          } successfully`,
+        });
       } else {
-        throw new Error("Failed to fetch transactions");
+        throw new Error(
+          `Failed to ${existingBudget ? "update" : "set"} budget`
+        );
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to set budget",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchTransactionsAndBudget = async () => {
+    try {
+      const [transactionsRes, budgetsRes] = await Promise.all([
+        fetch("/api/transactions"),
+        fetch("/api/budgets"),
+      ]);
+
+      if (transactionsRes.ok && budgetsRes.ok) {
+        const [transactionsData, budgetsData] = await Promise.all([
+          transactionsRes.json(),
+          budgetsRes.json(),
+        ]);
+
+        setTransactions(transactionsData);
+        setBudgets(budgetsData);
       }
     } catch (error) {
       toast({
@@ -163,7 +227,6 @@ export default function Dashboard() {
           throw new Error("Failed to update transaction");
         }
       } else {
-        // Handle creation (your existing creation code)
         const res = await fetch("/api/transactions", {
           method: "POST",
           headers: {
@@ -200,7 +263,6 @@ export default function Dashboard() {
         }
       }
       setIsDialogOpen(false);
-
     } catch (error) {
       toast({
         title: "Error",
@@ -221,57 +283,77 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="container mx-auto overflow-hidden ">
-      <div className="flex flex-col items-start py-2 text-center">
-        <h1 className="text-2xl text-start font-bold">
-          Personal Finance Visualizer
-        </h1>
-        <p className="max-w-[700px] text-start text-muted-foreground text-sm">
-          Track your expenses, visualize your spending patterns, and take
-          control of your financial future.
-        </p>
+    <div className="container mx-auto overflow-hidden sm:0 px-6">
+       <div className="flex align-center justify-between py-2 text-center">
+        <div>
+          <h1 className="text-2xl text-start  font-bold">
+            Personal Finance Visualizer
+          </h1>
+          <p className="max-w-[700px] text-start text-muted-foreground text-sm">
+            Track your expenses, visualize your spending patterns, and take
+            control of your financial future.
+          </p>
+        </div>
+        <div className="flex align-center ">
+          <Button variant="outline" size="sm" onClick={() => setIsBudgetDialogOpen(true)}>
+            Set Monthly Budget
+          </Button>
+        </div>
       </div>
 
       <DashboardSummary transactions={transactions} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
-        <Card className="h-[400px]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle>Transactions</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setAmount("");
-                setDate(new Date());
-                setDescription("");
-                setType("expense");
-                setEditingTransaction(false);
-                setEditingTransactionData(undefined);
-                setIsDialogOpen(true);
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Transaction
-            </Button>
-          </CardHeader>
-          <CardContent className="overflow-y-scroll pb-4">
-            <TransactionList
-              setIsDialogOpen={setIsDialogOpen}
-              transactions={transactions}
-              handleDelete={handleDelete}
-              handleEdit={handleEdit}
-            />
-          </CardContent>
-        </Card>
+        <div className="h-[400px]">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-xl md:text-2xl">Transactions</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setAmount("");
+                  setDate(new Date());
+                  setDescription("");
+                  setType("expense");
+                  setEditingTransaction(false);
+                  setEditingTransactionData(undefined);
+                  setIsDialogOpen(true);
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Transaction
+              </Button>
+            </CardHeader>
+            <CardContent className="overflow-y-scroll pb-4">
+              <TransactionList
+                setIsDialogOpen={setIsDialogOpen}
+                transactions={transactions}
+                handleDelete={handleDelete}
+                handleEdit={handleEdit}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[400px]">
-          <h2 className="text-2xl font-semibold mb-4 p-6">Monthly Expenses</h2>
+        <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
           <ExpensesChart transactions={transactions} />
         </div>
 
-        <div className="rounded-lg border bg-card text-card-foreground shadow-sm h-[400px]">
+        <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
           <CategoryPieChart transactions={transactions} />
+        </div>
+
+        <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
+          <SpendingInsights transactions={transactions} budgets={budgets} />
+        </div>
+
+        <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
+          <CategoryPieChart transactions={transactions} />
+        </div>
+
+        <div className="rounded-lg bg-card text-card-foreground shadow-sm h-[400px]">
+          <BudgetComparison transactions={transactions} budgets={budgets} />
         </div>
       </div>
       <TransactionForm
@@ -289,6 +371,11 @@ export default function Dashboard() {
         setType={setType}
         category={category}
         setCategory={setCategory}
+      />
+      <BudgetForm
+        open={isBudgetDialogOpen}
+        setOpen={setIsBudgetDialogOpen}
+        onSubmit={handleBudgetSubmit}
       />
     </div>
   );

@@ -39,7 +39,7 @@ export default function CategoryPieChart({ transactions }: CategoryPieChartProps
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Total Expenses by Category</CardTitle>
+        <CardTitle className="text-xl md:text-2xl">Total Expenses by Category</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">

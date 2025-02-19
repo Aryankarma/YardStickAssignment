@@ -16,7 +16,26 @@ export interface Transaction {
   description: string;
   date: Date;
   type: "expense" | "income";
-  category: TransactionCategory; // New field
+  category: TransactionCategory;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface MonthlyAggregate {
+  month: string;
+  expenses: number;
+  income: number;
+}
+
+export interface Budget {
+  _id: string;
+  category: TransactionCategory;
+  amount: number;
+  month: string;
+}
+
+export interface SpendingInsight {
+  message: string;
+  type: "warning" | "success" | "info";
+  category?: TransactionCategory;
 }
