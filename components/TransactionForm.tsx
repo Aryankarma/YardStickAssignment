@@ -110,7 +110,7 @@ export default function TransactionForm({
             />
           </div>
           <Button type="submit">
-          {editingTransaction ? "Edit Transaction" : "Add Transaction"}
+            {editingTransaction ? "Edit Transaction" : "Add Transaction"}
           </Button>
         </form>
       </DialogContent>

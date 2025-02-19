@@ -11,7 +11,11 @@ import {
 import { PlusCircle } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useToast } from "../../hooks/use-toast";
-import { useState, useEffect, DO_NOT_USE_OR_YOU_WILL_BE_FIRED_EXPERIMENTAL_FORM_ACTIONS } from "react";
+import {
+  useState,
+  useEffect,
+  DO_NOT_USE_OR_YOU_WILL_BE_FIRED_EXPERIMENTAL_FORM_ACTIONS,
+} from "react";
 import { useRouter } from "next/navigation";
 
 interface Transaction {
@@ -87,13 +91,12 @@ export default function Dashboard() {
     }
   };
 
-  // handle edit function
   const handleEdit = async (id: string) => {
     setIsDialogOpen(true);
     setEditingTransaction(true);
-  
+
     const transaction = transactions.find((t) => t._id === id);
-  
+
     if (!transaction) {
       toast({
         title: "Error",
@@ -102,58 +105,16 @@ export default function Dashboard() {
       });
       return;
     }
-  
+
     setEditingTransactionData(transaction);
     setAmount(transaction.amount.toString());
     setDescription(transaction.description);
     setType(transaction.type);
     setDate(new Date(transaction.date));
-
-    try {
-      
-      const res = await fetch(`/api/transactions/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: parseFloat(amount),
-          description,
-          type,
-          date,
-        }),
-      });
-
-      if (res.ok) {
-        const updatedTransaction = await res.json();
-        setTransactions(
-          transactions.map((t) => (t._id === id ? { ...t, ...updatedTransaction } : t))
-        );
-        toast({
-          title: "Success",
-          description: "Transaction updated successfully",
-        });
-      } else {
-        throw new Error("Failed to delete transaction");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete transaction",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if(editingTransaction) {
-      if (editingTransactionData) {
-        handleEdit(editingTransactionData._id);
-      }
-      return;
-    }
 
     if (!amount || !date || !description || !type) {
       toast({
@@ -165,43 +126,100 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await fetch("/api/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: Number(amount),
-          date,
-          description,
-          type,
-        }),
-      });
+      if (editingTransaction && editingTransactionData) {
+        const res = await fetch(
+          `/api/transactions/${editingTransactionData._id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              amount: Number(amount),
+              date,
+              description,
+              type,
+            }),
+          }
+        );
 
-      if (res.ok) {
-        setAmount("");
-        setDate(new Date());
-        setDescription("");
-        setType("expense");
-        toast({
-          title: "Success",
-          description: "Transaction added successfully",
-        });
-        const resp = await res.json();
-        setTransactions([
-          ...transactions,
-          { _id: resp.id, amount: Number(amount), date, type, description },
-        ]);
+        if (res.ok) {
+          const updatedTransaction = await res.json();
+          // setTransactions(
+          //   transactions.map((t) =>
+          //     t._id === editingTransactionData._id
+          //       ? { ...t, ...updatedTransaction }
+          //       : t
+          //   )
+          // );
+
+          setTransactions(prevTransactions => 
+            prevTransactions.map((t) =>
+              t._id === editingTransactionData._id 
+                ? {
+                    ...t,
+                    amount: Number(amount),
+                    date,
+                    description,
+                    type,
+                    updatedAt: new Date(),
+                  }
+                : t
+            )
+          );
+          toast({
+            title: "Success",
+            description: "Transaction updated successfully",
+          });
+        } else {
+          throw new Error("Failed to update transaction");
+        }
       } else {
-        throw new Error("Failed to add transaction");
+        // Handle creation (your existing creation code)
+        const res = await fetch("/api/transactions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: Number(amount),
+            date,
+            description,
+            type,
+          }),
+        });
+
+        if (res.ok) {
+          const resp = await res.json();
+          setTransactions([
+            ...transactions,
+            { _id: resp.id, amount: Number(amount), date, type, description },
+          ]);
+          toast({
+            title: "Success",
+            description: "Transaction added successfully",
+          });
+        } else {
+          throw new Error("Failed to add transaction");
+        }
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add transaction",
+        description: editingTransaction
+          ? "Failed to update transaction"
+          : "Failed to add transaction",
         variant: "destructive",
       });
     }
+    // Reset form
+    setAmount("");
+    setDate(new Date());
+    setDescription("");
+    setType("expense");
+    setEditingTransaction(false);
+    setEditingTransactionData(undefined);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -222,7 +240,15 @@ export default function Dashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsDialogOpen(true)}
+              onClick={() => {
+                setAmount("")
+                setDate(new Date())
+                setDescription("")
+                setType("expense")
+                setEditingTransaction(false)
+                setEditingTransactionData(undefined)
+                setIsDialogOpen(true)
+              }}
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Transaction
